@@ -47,7 +47,7 @@ interface NotebookData {
 
 export const NotebookEmbedding: QuartzTransformerPlugin<Partial<Options>> = (userOpts) => {
   const opts = { ...defaultOptions, ...userOpts }
-  
+
   // Ensure cache directory exists
   const ensureCacheDir = async () => {
     try {
@@ -71,7 +71,7 @@ export const NotebookEmbedding: QuartzTransformerPlugin<Partial<Options>> = (use
       const response = await fetch(rawUrl, {
         signal: AbortSignal.timeout(opts.downloadTimeout)
       })
-      
+
       if (!response.ok) {
         console.warn(`Failed to download notebook from ${rawUrl}: ${response.status}`)
         return null
@@ -110,19 +110,19 @@ export const NotebookEmbedding: QuartzTransformerPlugin<Partial<Options>> = (use
   const cellToHtml = async (cell: NotebookCell, index: number): Promise<string> => {
     const cellId = `notebook-cell-${index}`
     let content = ''
-    
+
     if (cell.cell_type === 'markdown') {
       const source = Array.isArray(cell.source) ? cell.source.join('') : cell.source
       content = `<div class="notebook-markdown-cell">${await markdownToHtml(source)}</div>`
     } else if (cell.cell_type === 'code') {
       const source = Array.isArray(cell.source) ? cell.source.join('') : cell.source
       const executionCount = cell.execution_count
-      
+
       // Create execution count display
-      const executionLabel = executionCount !== null && executionCount !== undefined 
+      const executionLabel = executionCount !== null && executionCount !== undefined
         ? `In [${executionCount}]:`
         : 'In [ ]:'
-      
+
       // Use normal code block styling with execution count
       const codeBlock = `
         <div class="notebook-code-input">
@@ -131,27 +131,27 @@ export const NotebookEmbedding: QuartzTransformerPlugin<Partial<Options>> = (use
             <pre><code class="language-python">${escapeHtml(source)}</code></pre>
           </div>
         </div>`
-      
+
       let outputsHtml = ''
       if (cell.outputs && cell.outputs.length > 0) {
         // Add output execution count
-        const outputLabel = executionCount !== null && executionCount !== undefined 
+        const outputLabel = executionCount !== null && executionCount !== undefined
           ? `Out[${executionCount}]:`
           : 'Out[ ]:'
-        
+
         outputsHtml = `<div class="notebook-outputs">
           <div class="notebook-output-label">${outputLabel}</div>
           <div class="notebook-output-content">`
-        
+
         for (const output of cell.outputs) {
           outputsHtml += formatOutput(output)
         }
         outputsHtml += '</div></div>'
       }
-      
+
       content = `${codeBlock}${outputsHtml}`
     }
-    
+
     return `<div id="${cellId}" class="notebook-cell notebook-${cell.cell_type}-cell">${content}</div>`
   }  // Simple markdown to HTML converter using remark
   const markdownToHtml = async (markdown: string): Promise<string> => {
@@ -165,7 +165,7 @@ export const NotebookEmbedding: QuartzTransformerPlugin<Partial<Options>> = (use
         .use(remarkSmartypants)
         .use(remarkRehype, { allowDangerousHtml: true })
         .use(rehypeStringify, { allowDangerousHtml: true })
-      
+
       const result = await processor.process(markdown)
       return String(result.value)
     } catch (error) {
@@ -183,35 +183,35 @@ export const NotebookEmbedding: QuartzTransformerPlugin<Partial<Options>> = (use
     } else if (output.output_type === 'execute_result' || output.output_type === 'display_data') {
       if (output.data) {
         let content = ''
-        
+
         // Handle text/plain
         if (output.data['text/plain']) {
-          const text = Array.isArray(output.data['text/plain']) 
-            ? output.data['text/plain'].join('') 
+          const text = Array.isArray(output.data['text/plain'])
+            ? output.data['text/plain'].join('')
             : output.data['text/plain']
           content += `<div class="notebook-text-output"><pre>${escapeHtml(text)}</pre></div>`
         }
-        
+
         // Handle image/png
         if (output.data['image/png']) {
           content += `<div class="notebook-image-output"><img src="data:image/png;base64,${output.data['image/png']}" alt="Plot output" /></div>`
         }
-        
+
         // Handle text/html
         if (output.data['text/html']) {
-          const html = Array.isArray(output.data['text/html']) 
-            ? output.data['text/html'].join('') 
+          const html = Array.isArray(output.data['text/html'])
+            ? output.data['text/html'].join('')
             : output.data['text/html']
           content += `<div class="notebook-html-output">${html}</div>`
         }
-        
+
         return content
       }
     } else if (output.output_type === 'error') {
       const traceback = output.traceback ? output.traceback.join('\n') : ''
       return `<div class="notebook-error-output"><pre>${escapeHtml(traceback)}</pre></div>`
     }
-    
+
     return ''
   }
 
@@ -227,14 +227,14 @@ export const NotebookEmbedding: QuartzTransformerPlugin<Partial<Options>> = (use
   const notebookToHtml = async (notebook: NotebookData, sourceUrl: string): Promise<string> => {
     const cellPromises = notebook.cells.map((cell, index) => cellToHtml(cell, index))
     const cells = (await Promise.all(cellPromises)).join('\n')
-    
+
     // Extract notebook filename from URL
     const notebookName = sourceUrl.split('/').pop() || 'notebook.ipynb'
-    
+
     // Get favicon URL using our detection logic
     const faviconUrl = await getFaviconUrl(sourceUrl)
     const siteName = new URL(sourceUrl).hostname
-    
+
     return `
       <div class="jupyter-notebook-embedded">
         <div class="notebook-header">
@@ -443,53 +443,54 @@ export const NotebookEmbedding: QuartzTransformerPlugin<Partial<Options>> = (use
   color: var(--gray);
 }
 
-@media (prefers-color-scheme: dark) {
-  .jupyter-notebook-embedded {
-    background: var(--darkgray);
-    border-color: var(--secondary);  }
-  
-  .notebook-header {
-    background: var(--secondary);
-    color: var(--light);
-  }
-    .notebook-link {
-    color: var(--light);
-    border-bottom-color: var(--light);
-  }
-  
-  .notebook-execution-count,
-  .notebook-output-label {
-    color: var(--tertiary);
-  }
-  
-  .notebook-text-output pre,
-  .notebook-stream-output pre {
-    background: var(--darkgray);
-    border-color: var(--gray);
-    color: var(--light);
-  }
-  
-  .notebook-image-output {
-    background: var(--darkgray);
-    border-color: var(--gray);
-  }
-  
-  .notebook-markdown-cell {
-    background: var(--darkgray);
-    color: var(--light);
-  }
-    .notebook-markdown-cell h1,
-  .notebook-markdown-cell h2,
-  .notebook-markdown-cell h3,
-  .notebook-markdown-cell h4 {
-    color: var(--light);
-  }
-  
-  .notebook-error-output pre {
-    background: #2d1b1b;
-    border-color: #991b1b;
-    color: #fca5a5;
-  }
+html[data-theme='dark'] .jupyter-notebook-embedded {
+  background: var(--darkgray);
+  border-color: var(--secondary);
+}
+
+html[data-theme='dark'] .notebook-header {
+  background: var(--secondary);
+  color: var(--light);
+}
+
+html[data-theme='dark'] .notebook-link {
+  color: var(--light);
+  border-bottom-color: var(--light);
+}
+
+html[data-theme='dark'] .notebook-execution-count,
+html[data-theme='dark'] .notebook-output-label {
+  color: var(--tertiary);
+}
+
+html[data-theme='dark'] .notebook-text-output pre,
+html[data-theme='dark'] .notebook-stream-output pre {
+  background: var(--darkgray);
+  border-color: var(--gray);
+  color: var(--light);
+}
+
+html[data-theme='dark'] .notebook-image-output {
+  background: var(--darkgray);
+  border-color: var(--gray);
+}
+
+html[data-theme='dark'] .notebook-markdown-cell {
+  background: var(--darkgray);
+  color: var(--light);
+}
+
+html[data-theme='dark'] .notebook-markdown-cell h1,
+html[data-theme='dark'] .notebook-markdown-cell h2,
+html[data-theme='dark'] .notebook-markdown-cell h3,
+html[data-theme='dark'] .notebook-markdown-cell h4 {
+  color: var(--light);
+}
+
+html[data-theme='dark'] .notebook-error-output pre {
+  background: #2d1b1b;
+  border-color: #991b1b;
+  color: #fca5a5;
 }
       </style>
     `
@@ -498,27 +499,28 @@ export const NotebookEmbedding: QuartzTransformerPlugin<Partial<Options>> = (use
   const getFaviconUrl = async (sourceUrl: string): Promise<string> => {
     try {
       const url = new URL(sourceUrl)
-        // Try to fetch the HTML and parse favicon links
+      // Try to fetch the HTML and parse favicon links
       const response = await fetch(`${url.protocol}//${url.hostname}`, {
         signal: AbortSignal.timeout(5000),
         headers: {
           'User-Agent': 'Mozilla/5.0 (compatible; Quartz-NotebookEmbedder/1.0)'
         }
       })
-      
+
       if (response.ok) {
         const html = await response.text()
         const icons = parseFaviconLinks(html, url)
-        
+
         if (icons.length > 0) {
           // Sort by size (largest first) and return the best one
           const bestIcon = getBestIcon(icons)
           return bestIcon
         }
-      }    } catch (error) {
+      }
+    } catch (error) {
       console.warn(`Failed to fetch favicon from HTML for ${sourceUrl}:`, error)
     }
-    
+
     // Fallback to alternative sources
     const domain = new URL(sourceUrl).hostname
     const fallbackSources = [
@@ -526,7 +528,7 @@ export const NotebookEmbedding: QuartzTransformerPlugin<Partial<Options>> = (use
       `https://icons.duckduckgo.com/ip3/${domain}.ico`,
       `${new URL(sourceUrl).protocol}//${domain}/favicon.ico`
     ]
-    
+
     for (const fallbackUrl of fallbackSources) {
       try {
         const response = await fetch(fallbackUrl, {
@@ -540,47 +542,50 @@ export const NotebookEmbedding: QuartzTransformerPlugin<Partial<Options>> = (use
         // Continue to next fallback
       }
     }
-    
+
     // Generate letter-based favicon as last resort
     return generateLetterFavicon(domain)
   }
-  
-  const parseFaviconLinks = (html: string, baseUrl: URL): Array<{sizes: string, href: string}> => {
+
+  const parseFaviconLinks = (html: string, baseUrl: URL): Array<{ sizes: string, href: string }> => {
     const regex = /<link[^>]*rel=['"]?[^\s]*icon['"]?[^>]*?>/gi
     const matches = Array.from(html.matchAll(regex))
-    const icons: Array<{sizes: string, href: string}> = []
-    
+    const icons: Array<{ sizes: string, href: string }> = []
+
     matches.forEach((match) => {
       const linkTag = match[0]
-      
+
       // Extract href value
       const hrefMatch = linkTag.match(/href=['"]?([^\s>'"]*)['"]?/i)
       const href = hrefMatch ? hrefMatch[1] : null
-      
+
       // Extract sizes value
       const sizesMatch = linkTag.match(/sizes=['"]?([^\s>'"]*)['"]?/i)
       const sizes = sizesMatch ? sizesMatch[1] : 'unknown'
-      
+
       if (href) {
-        // Convert relative URLs to absolute
-        let absoluteHref = href
-        if (!href.startsWith('http') && !href.startsWith('data:')) {
-          absoluteHref = href.startsWith('/') 
-            ? `${baseUrl.protocol}//${baseUrl.host}${href}`
-            : `${baseUrl.protocol}//${baseUrl.host}/${href}`
-        }
-        
+        // Convert relative URLs to absolute using helper
+        const absoluteHref = toAbsoluteUrl(href, baseUrl)
         icons.push({ sizes, href: absoluteHref })
       }
     })
-    
+
     return icons
   }
-  
-  const getBestIcon = (icons: Array<{sizes: string, href: string}>): string => {
+
+  // Helper to convert relative URLs to absolute
+  const toAbsoluteUrl = (href: string, baseUrl: URL): string => {
+    try {
+      return new URL(href, baseUrl).toString()
+    } catch {
+      return href
+    }
+  }
+
+  const getBestIcon = (icons: Array<{ sizes: string, href: string }>): string => {
     // Sort by priority: known sizes first, then unknown
     const sizeMap = new Map<string, number>()
-    
+
     icons.forEach(icon => {
       if (icon.sizes === 'unknown') {
         sizeMap.set(icon.href, 16) // Default size
@@ -591,17 +596,17 @@ export const NotebookEmbedding: QuartzTransformerPlugin<Partial<Options>> = (use
         sizeMap.set(icon.href, size)
       }
     })
-    
+
     // Sort by size (descending) and return the largest
     const sortedIcons = icons.sort((a, b) => {
       const sizeA = sizeMap.get(a.href) || 16
       const sizeB = sizeMap.get(b.href) || 16
       return sizeB - sizeA
     })
-    
+
     return sortedIcons[0].href
   }
-  
+
   const generateLetterFavicon = (domain: string): string => {
     const firstLetter = domain.charAt(0).toUpperCase()
     const svgContent = `<svg width="32" height="32" xmlns="http://www.w3.org/2000/svg">
@@ -619,20 +624,20 @@ export const NotebookEmbedding: QuartzTransformerPlugin<Partial<Options>> = (use
         () => {
           return async (tree: Root, _file) => {
             await ensureCacheDir()
-            
+
             const promises: Promise<void>[] = []
-            
+
             visit(tree, "element", (node: Element) => {
               if (node.tagName === "a" && node.properties?.href) {
                 const href = node.properties.href as string
-                
+
                 // Check if this is a notebook link
                 if (href.endsWith('.ipynb')) {
                   const promise = (async () => {
                     try {
                       // Try to load from cache first
                       let notebook = await loadCachedNotebook(href)
-                      
+
                       // If not cached and download is enabled, try to download
                       if (!notebook && opts.downloadFromGitHub) {
                         notebook = await downloadNotebook(href)
@@ -642,7 +647,7 @@ export const NotebookEmbedding: QuartzTransformerPlugin<Partial<Options>> = (use
                       }                      // If we have notebook data, embed it
                       if (notebook) {
                         const notebookHtml = await notebookToHtml(notebook, href)
-                        
+
                         // Replace the link with embedded notebook
                         node.tagName = "div"
                         node.properties = {
@@ -653,23 +658,24 @@ export const NotebookEmbedding: QuartzTransformerPlugin<Partial<Options>> = (use
                         const notebookAst = fromHtml(notebookHtml, { fragment: true })
                         node.children = notebookAst.children as any
                       } else {
-                        // Keep original link but add a class to indicate it's a notebook
-                        if (Array.isArray(node.properties.className)) {
-                          node.properties.className.push("notebook-link-unavailable")
-                        } else {
-                          node.properties.className = ["notebook-link-unavailable"]
+                        // Show the original link but mark it as unavailable
+                        node.properties = {
+                          ...node.properties,
+                          className: ["notebook-link-unavailable"]
                         }
+                        // Optionally, you can keep the original children or set a message:
+                        // node.children = [{ type: "text", value: "Notebook unavailable" }] as any
                       }
                     } catch (error) {
                       console.warn(`Error processing notebook link ${href}:`, error)
                     }
                   })()
-                  
+
                   promises.push(promise)
                 }
               }
             })
-            
+
             // Wait for all notebook processing to complete
             await Promise.all(promises)
           }
