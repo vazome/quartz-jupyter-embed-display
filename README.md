@@ -11,9 +11,7 @@ You can check it here: https://vazome.tech/AI-and-MLOps/MLOps-Theory
 ## Installation
 
 1. Copy `notebook.ts`**: Put it at `quartz\plugins\transformers\`
-2. Install Required Packages: This plugin relies on `rehype-stringify`, which is NOT included by default in @jackyzha0/quartz:
-
-Install with:
+2. This plugin relies on `rehype-stringify` package, family of which is included by default in [@jackyzha0/quartz](https://github.com/jackyzha0/quartz), except this plugin... let's fix that:
 ```bash
 npm install rehype-stringify
 ```
