@@ -7,24 +7,11 @@ This package provides a Quartz-compatible plugin to embed and display Jupyter no
 1. **Copy `notebook.ts`**: Ensure `notebook.ts` is present in your Quartz plugin directory, or import it into your build step as needed.
 
 2. **Install Required Packages**
-This plugin relies on the following packages, which are NOT included by default in @jackyzha0/quartz:
-
-- `fs/promises` (built-in Node.js >=v14)
-- `unist-util-visit`
-- `unified`
-- `remark-parse`
-- `remark-breaks`
-- `remark-frontmatter`
-- `remark-gfm`
-- `remark-math`
-- `remark-rehype`
-- `remark-smartypants`
-- `rehype-stringify`
-- `hast-util-from-html`
+This plugin relies on `rehype-stringify`, which is NOT included by default in @jackyzha0/quartz:
 
 Install with:
 ```bash
-npm install unist-util-visit unified remark-parse remark-breaks remark-frontmatter remark-gfm remark-math remark-rehype remark-smartypants rehype-stringify hast-util-from-html
+npm install rehype-stringify
 ```
 
 3. **Enable the Plugin**
