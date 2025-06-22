@@ -15,7 +15,7 @@ You can check it here: https://vazome.tech/AI-and-MLOps/MLOps-Theory
 ```bash
 npm install rehype-stringify
 ```
-3. Append `Plugin.NotebookEmbedding` block **above** existing `SyntaxHighlighting` block
+3. Append `Plugin.NotebookEmbedding` block **above** existing `SyntaxHighlighting` block in `quartz.config.ts`:
 ```typescript
       Plugin.NotebookEmbedding({
         cacheDir: "quartz/.quartz-cache/notebooks",
