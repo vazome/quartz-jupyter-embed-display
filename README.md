@@ -2,6 +2,8 @@
 
 This package provides a Quartz-compatible plugin to embed and display Jupyter notebooks (.ipynb) in your Quartz-based site.
 
+You can check it here: https://vazome.tech/AI-and-MLOps/MLOps-Theory
+
 | Code | Images |
 | :---: | :---: |
 | <img src="https://github.com/user-attachments/assets/f63fae48-74ba-4a35-b239-ce70d5034fcf" alt="Before styling" width="450"> | <img src="https://github.com/user-attachments/assets/acd9049a-4e0e-4f0f-ac02-88197de545db" alt="After styling" width="450"> |
